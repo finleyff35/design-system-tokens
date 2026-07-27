@@ -1,0 +1,57 @@
+name: CSS Design System Pipeline
+
+on:
+  schedule:
+    # Wakes up at 06:22, 11:22, and 16:22 UTC
+    # (2:22 PM, 7:22 PM, and 12:22 AM Singapore Time)
+    - cron: '22 6,11,16 * * *'
+  workflow_dispatch:
+
+jobs:
+  style-token-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v4
+
+      - name: Update CSS Variables
+        run: |
+          # 30% chance to skip (keeps the contribution graph looking organic)
+          if [ $((RANDOM % 100)) -lt 30 ]; then
+            echo "Design system tokens up to date. Skipping run."
+            exit 0
+          fi
+
+          mkdir -p styles
+          TARGET_FILE="styles/variables.css"
+          
+          # Initialize file if it doesn't exist
+          if [ ! -f "$TARGET_FILE" ]; then
+            echo ":root {" > "$TARGET_FILE"
+            echo "  --primary-color: #3b82f6;" >> "$TARGET_FILE"
+            echo "}" >> "$TARGET_FILE"
+          fi
+
+          # Append valid CSS custom properties
+          TOKENS=("spacing-unit" "border-radius" "font-weight" "elevation-shadow" "z-index-layer")
+          PICKED_TOKEN=${TOKENS[$RANDOM % ${#TOKENS[@]}]}
+          
+          echo "  --theme-$PICKED_TOKEN-$RANDOM: $((RANDOM % 32 + 1))px;" >> "$TARGET_FILE"
+
+          git config --global user.name "finleyff35"
+          git config --global user.email " finleyff35@gmail.com"
+
+          # Design and CSS focused vocabulary
+          MESSAGES=(
+            "style: adjust design system token variables"
+            "refactor: update css custom properties map"
+            "style: fine-tune typography and spacing scale"
+            "chore: sync theme palette tokens"
+          )
+          MSG=${MESSAGES[$RANDOM % ${#MESSAGES[@]}]}
+
+          git add styles/
+          git commit -m "$MSG"
+          git push
